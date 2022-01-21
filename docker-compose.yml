@@ -1,0 +1,126 @@
+
+version: '3.8'
+
+volumes:
+  prometheus_data: {}
+
+
+networks:
+  cardano_stake:
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+  prometheus_net:
+
+
+services: 
+
+  relay_node:
+    container_name: relay
+    image: inputoutput/cardano-node
+
+    networks:
+      cardano_stake:
+        aliases:
+          - relay_node
+        ipv4_address: 172.20.0.23
+
+    restart: always
+
+    volumes:
+      - ./00cardanorelay/cardano-node-ipc:/ipc
+      - ./00cardanorelay/cardano-node-data:/data
+      - ./00cardanorelay/config:/config
+
+    command: 
+      - run
+      - --config /config/testnet-config.json
+      - --topology /config/testnet-topology.json
+      - --database-path /db
+      - --socket-path opt/cardano/ipc/node.socket
+      - --host-addr 0.0.0.0
+      - --port 3001
+
+    ports:
+      - 3001:3001
+
+    environment:
+      - CARDANO_NODE_SOCKET_PATH=opt/cardano/ipc/node.socket
+      - CARDANO_UPDATE_TOPOLOGY=true
+      - CARDANO_UPDATE_CONFIG=true
+
+  core_node:
+    container_name: core
+    image: inputoutput/cardano-node
+
+    networks:
+      cardano_stake:
+        aliases:
+          - core_node
+        ipv4_address: 172.20.0.24
+
+    restart: always
+
+    volumes:
+      - ./01cardanocore/cardano-node-ipc:/ipc
+      - ./01cardanocore/cardano-node-data:/data
+      - ./01cardanocore/config:/config
+
+    command: 
+      - run
+      - --config /config/testnet-config.json
+      - --topology /config/testnet-topology.json
+      - --database-path /db
+      - --socket-path opt/cardano/ipc/node.socket
+      - --host-addr 0.0.0.0
+      - --port 3002
+      - --shelley-kes-key pool-keys/kes.skey
+      - --shelley-vrf-key pool-keys/vrf.skey
+      - --shelley-operational-certificate pool-keys/node.cert
+
+    ports:
+      - 3002:3002
+
+    environment:
+      - CARDANO_NODE_SOCKET_PATH=opt/cardano/ipc/node.socket
+      - CARDANO_UPDATE_TOPOLOGY=true
+      - CARDANO_UPDATE_CONFIG=true
+
+  node_exporter:
+    container_name: node_exporter
+    image: prom/node-exporter:latest
+
+    networks:
+      cardano_stake:
+        aliases:
+          - node_exporter
+        ipv4_address: 172.20.0.22
+
+    restart: unless-stopped
+
+    volumes:
+      - ./00node_exporter:/host:ro,rslave
+
+    command:
+      - '--path.rootfs=/host'
+
+    ports:
+      - 12789:12789
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:latest
+    networks:
+      - prometheus_net
+    restart: unless-stopped
+
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus_data:/prometheus
+
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+
+    ports:
+      - 9100:9100 
