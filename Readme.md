@@ -12,7 +12,7 @@ Visit @ [Novapago Cardano Stake Pool](https://pooltool.io/pool/ab16ce81507d4298d
 Sources:
 
 [Cardano Foundation Docs](https://docs.cardano.org/) \
-[Cardano Developers](https://https://developers.cardano.org/) \
+[Cardano Developers](https://developers.cardano.org/) \
 [IOHK](https://iohk.zendesk.com/hc/en-us) \
 [IOHK](https://github.com/input-output-hk/cardano-node) (Github) \
 [Cardano Blockchain Explorer](https://explorer.cardano-testnet.iohkdev.io/en) (Testnet) \
